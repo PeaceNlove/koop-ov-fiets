@@ -20,6 +20,7 @@ function Model (koop) {}
 // req.params.layer
 // req.params.method
 Model.prototype.getData = function (req, callback) {
+   
   const url = "http://fiets.openov.nl/locaties.json";
   const geojson = {
     type: 'FeatureCollection',
@@ -27,13 +28,17 @@ Model.prototype.getData = function (req, callback) {
     metadata: {
     name: "OV_fiets", // The name of the layer
     description: "This layer contains the public transport rental bikes locations and availability", // The description of the layer
-    displayField: "rentalBikes" // The display field to be used by a client
-    }
+    displayField: "rentalBikes", // The display field to be used by a client
+    idField: "OBJECTID"
+    },
+    ttl: 60
   }
-  
+  console.log(url);
   request.get(url, function(e, res){
     var json = JSON.parse(res.body);
-    for (var i in json.locaties){	
+    var j=0;
+    for (var i in json.locaties){
+        j=j+1;     
         //"ck001": {"name": "OV-fiets", "extra": {"fetchTime": 1444988292, "rentalBikes": "14", "locationCode": "ck001"}, "lat": 51.72659, "link": {"params": {}, "uri": "https://places.ns-mlab.nl/api/v2/places/station-retail/OV-fiets-ck001"}, "stationCode": "CK", "openingHours": [{"dayOfWeek": 1, "endTime": "00:00", "startTime": "00:00"}, {"dayOfWeek": 2, "endTime": "00:00", "startTime": "00:00"}, {"dayOfWeek": 3, "endTime": "00:00", "startTime": "00:00"}, {"dayOfWeek": 4, "endTime": "00:00", "startTime": "00:00"}, {"dayOfWeek": 5, "endTime": "00:00", "startTime": "00:00"}, {"dayOfWeek": 6, "endTime": "00:00", "startTime": "00:00"}, {"dayOfWeek": 7, "endTime": "00:00", "startTime": "00:00"} ], "lng": 5.87423, "open": "Yes", "description": "Cuijk"}, 						  var feature = {
             var feature = {
             "type": "Feature",
@@ -45,6 +50,8 @@ Model.prototype.getData = function (req, callback) {
             },
             "properties": json.locaties[i]
           }
+          feature.properties.OBJECTID = j;
+          
           delete feature.properties.lng;
           delete feature.properties.lat;
           feature.properties.locationCode = i;
@@ -54,6 +61,7 @@ Model.prototype.getData = function (req, callback) {
           else{
             feature.properties.rentalBikes = null;
           }
+          
           delete feature.properties.infoImages
           delete feature.properties.extra
           delete feature.properties.extraInfo
@@ -66,9 +74,9 @@ Model.prototype.getData = function (req, callback) {
           delete feature.properties.openingHours;
           geojson.features.push(feature);
       }
+      
       callback(null, geojson)
   });
-
   
 }
 
